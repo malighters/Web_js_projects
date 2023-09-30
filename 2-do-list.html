@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ToDo List</title>
+    <style>
+        li {
+            cursor: grab;
+        }
+    </style>
+</head>
+<body>
+    <h1>ToDo List</h1>
+    <input type="text" id="task" placeholder="Add a task">
+    <button onclick="addTask()">Add</button>
+    <ul id="taskList"></ul>
+
+    <script>
+        const savedTasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+        const taskList = document.getElementById('taskList');
+        const taskInput = document.getElementById('task');
+
+        function addTask() {
+            const taskText = taskInput.value;
+            if (taskText.trim() === '') return;
+
+            savedTasks.push(taskText);
+            localStorage.setItem('tasks', JSON.stringify(savedTasks));
+
+            renderTasks();
+            taskInput.value = '';
+        }
+
+        function renderTasks() {
+            taskList.innerHTML = '';
+            savedTasks.forEach((task, index) => {
+                const li = document.createElement('li');
+                li.textContent = task;
+                li.draggable = true;
+                li.dataset.index = index;
+                li.addEventListener('dragstart', handleDragStart);
+                li.addEventListener('dragover', handleDragOver);
+                li.addEventListener('dragenter', handleDragEnter);
+                li.addEventListener('dragleave', handleDragLeave);
+                li.addEventListener('drop', handleDrop);
+                taskList.appendChild(li);
+            });
+        }
+
+        let dragSrcEl = null;
+
+        function handleDragStart(e) {
+            dragSrcEl = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', e.target.dataset.index);
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            this.classList.add('over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            if (dragSrcEl !== this) {
+                savedTasks.splice(this.dataset.index, 0, savedTasks.splice(dragSrcEl.dataset.index, 1)[0]);
+                localStorage.setItem('tasks', JSON.stringify(savedTasks));
+                renderTasks();
+            }
+            return false;
+        }
+
+        function handleDragEnd() {
+            const listItems = document.querySelectorAll('#taskList li');
+            listItems.forEach((item) => {
+                item.classList.remove('over');
+            });
+        }
+
+        window.onload = function() {
+            renderTasks();
+        };
+    </script>
+</body>
+</html>
+
+
+
+

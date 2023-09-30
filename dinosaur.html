@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dinosaur Run</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        canvas {
+            border: 2px solid black;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        let dino;
+        let obstacles = [];
+        let score = 0;
+        let gameSpeed = 5;
+
+        function setup() {
+            createCanvas(800, 400);
+            dino = new Dinosaur();
+        }
+
+        function draw() {
+            background(220);
+            
+            // Вивід рахунку на екран
+            fill(0);
+            textSize(32);
+            text(`Score: ${score}`, 20, 30);
+            
+            // Перевірка колізій та оновлення гри
+            dino.update();
+            dino.show();
+            
+            // Створення перешкод і оновлення їх позицій
+            if (frameCount % 100 === 0) {
+                obstacles.push(new Obstacle());
+            }
+
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                obstacles[i].show();
+                obstacles[i].update();
+
+                if (obstacles[i].hits(dino)) {
+                    gameOver();
+                    return;
+                }
+
+                if (obstacles[i].offscreen()) {
+                    obstacles.splice(i, 1);
+                    score++;
+                }
+            }
+        }
+
+        function keyPressed() {
+            if (key === ' ' && !dino.isJumping) {
+                dino.jump();
+            }
+        }
+
+        function gameOver() {
+            noLoop();
+            textSize(32);
+            fill(0);
+            text('Game Over', width / 2 - 150, height / 2 - 50);
+        }
+
+        class Dinosaur {
+            constructor() {
+                this.x = 50;
+                this.y = height - 50;
+                this.velocity = 0;
+                this.isJumping = false;
+            }
+
+            jump() {
+                if (!this.isJumping) {
+                    this.velocity = -20;
+                    this.isJumping = true;
+                }
+                this.isJumping = false;
+            }
+
+            update() {
+                this.velocity += 1;
+                this.y += this.velocity;
+                this.y = constrain(this.y, 0, height - 50);
+            }
+
+            show() {
+                fill(0);
+                rect(this.x, this.y, 50, 50);
+            }
+        }
+
+        class Obstacle {
+            constructor() {
+                this.x = width;
+                this.w = 20;
+                this.h = random(25, 80);
+                this.speed = gameSpeed;
+            }
+
+            update() {
+                this.x -= this.speed;
+            }
+
+            show() {
+                fill(255, 0, 0);
+                rect(this.x, height - this.h, this.w, this.h);
+            }
+
+            offscreen() {
+                return this.x < -this.w;
+            }
+
+            hits(dino) {
+                return (
+                    dino.x + 50 > this.x &&
+                    dino.x < this.x + this.w &&
+                    dino.y + 50 > height - this.h
+                );
+            }
+        }
+    </script>
+</body>
+</html>
